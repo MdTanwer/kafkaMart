@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "UserProfile",
+  "namespace": "com.kafkamart.avro",
+  "doc": "User profile v1 — schema governance baseline (copy of infra/schemas/UserProfile_v1.avsc)",
+  "fields": [
+    {"name": "user_id", "type": "string"},
+    {"name": "name", "type": "string"},
+    {"name": "email", "type": "string"}
+  ]
+}

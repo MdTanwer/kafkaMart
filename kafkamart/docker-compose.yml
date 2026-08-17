@@ -1,94 +1,78 @@
+x-kafka-common: &kafka-common
+  image: confluentinc/cp-kafka:${CONFLUENT_VERSION:-7.8.0}
+  restart: unless-stopped
+  networks: [kafkamart-net]
+  environment: &kafka-common-env
+    KAFKA_PROCESS_ROLES: broker,controller
+    KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:29093,2@kafka-2:29093,3@kafka-3:29093
+    CLUSTER_ID: ${CLUSTER_ID:-MkU3OEVBNTcwNTJENDM2Qk}
+    KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+    KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+    KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+    KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+    KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+    KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+    KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+    KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+    KAFKA_MIN_INSYNC_REPLICAS: 2
+    KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE: "false"
+    KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 300000
+    KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    KAFKA_LOG_DIRS: /var/lib/kafka/data
+  healthcheck: &kafka-health
+    test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:19092 >/dev/null 2>&1"]
+    interval: 10s
+    timeout: 10s
+    retries: 18
+    start_period: 40s
+
 services:
   kafka-1:
-    image: confluentinc/cp-kafka:7.7.1
+    <<: *kafka-common
     hostname: kafka-1
     container_name: kafkamart-kafka-1
     ports:
       - "9092:9092"
+    volumes:
+      - ./scripts/create-topics.sh:/usr/local/bin/create-topics.sh:ro
     environment:
+      <<: *kafka-common-env
       KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:29093,2@kafka-2:29093,3@kafka-3:29093
-      CLUSTER_ID: ${CLUSTER_ID:-kafkamart-local-cluster}
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:19092,EXTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:19092,EXTERNAL://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
-      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
-      KAFKA_MIN_INSYNC_REPLICAS: 2
-    healthcheck:
-      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:19092"]
-      interval: 10s
-      timeout: 10s
-      retries: 18
 
   kafka-2:
-    image: confluentinc/cp-kafka:7.7.1
+    <<: *kafka-common
     hostname: kafka-2
     container_name: kafkamart-kafka-2
     ports:
       - "9094:9094"
     environment:
+      <<: *kafka-common-env
       KAFKA_NODE_ID: 2
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:29093,2@kafka-2:29093,3@kafka-3:29093
       CLUSTER_ID: ${CLUSTER_ID:-kafkamart-local-cluster}
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:19092,EXTERNAL://0.0.0.0:9094,CONTROLLER://0.0.0.0:29093
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-2:19092,EXTERNAL://localhost:9094
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
-      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
-      KAFKA_MIN_INSYNC_REPLICAS: 2
-    healthcheck:
-      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:19092"]
-      interval: 10s
-      timeout: 10s
-      retries: 18
 
   kafka-3:
-    image: confluentinc/cp-kafka:7.7.1
+    <<: *kafka-common
     hostname: kafka-3
     container_name: kafkamart-kafka-3
     ports:
       - "9096:9096"
     environment:
+      <<: *kafka-common-env
       KAFKA_NODE_ID: 3
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:29093,2@kafka-2:29093,3@kafka-3:29093
-      CLUSTER_ID: ${CLUSTER_ID:-kafkamart-local-cluster}
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:19092,EXTERNAL://0.0.0.0:9096,CONTROLLER://0.0.0.0:29093
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-3:19092,EXTERNAL://localhost:9096
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
-      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
-      KAFKA_MIN_INSYNC_REPLICAS: 2
-    healthcheck:
-      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:19092"]
-      interval: 10s
-      timeout: 10s
-      retries: 18
 
   kafka-init:
-    image: confluentinc/cp-kafka:7.7.1
+    image: confluentinc/cp-kafka:${CONFLUENT_VERSION:-7.8.0}
     container_name: kafkamart-kafka-init
+    restart: unless-stopped
+    networks: [kafkamart-net]
     depends_on:
       kafka-1:
         condition: service_healthy
@@ -97,17 +81,33 @@ services:
       kafka-3:
         condition: service_healthy
     volumes:
-      - ./scripts/create-topics.sh:/create-topics.sh:ro
-    entrypoint: ["bash", "/create-topics.sh"]
+      - ./scripts/create-topics.sh:/usr/local/bin/create-topics.sh:ro
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka-1:19092,kafka-2:19092,kafka-3:19092
+    entrypoint: ["bash", "-c", "bash /usr/local/bin/create-topics.sh && exec sleep infinity"]
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "kafka-topics --bootstrap-server kafka-1:19092 --list | grep -qx orders && kafka-topics --bootstrap-server kafka-1:19092 --list | grep -qx users-cdc",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
 
   schema-registry:
-    image: confluentinc/cp-schema-registry:7.7.1
+    image: confluentinc/cp-schema-registry:${CONFLUENT_VERSION:-7.8.0}
     hostname: schema-registry
     container_name: kafkamart-schema-registry
+    restart: unless-stopped
+    networks: [kafkamart-net]
     depends_on:
       kafka-1:
+        condition: service_healthy
+      kafka-2:
+        condition: service_healthy
+      kafka-3:
         condition: service_healthy
     ports:
       - "${SCHEMA_REGISTRY_PORT:-8181}:8181"
@@ -117,25 +117,36 @@ services:
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka-1:19092,kafka-2:19092,kafka-3:19092
       SCHEMA_REGISTRY_SCHEMA_COMPATIBILITY_LEVEL: BACKWARD
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8181/subjects"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:8181/subjects >/dev/null"]
       interval: 10s
       timeout: 5s
-      retries: 12
+      retries: 18
+      start_period: 30s
 
-  kafka-connect:
-    image: confluentinc/cp-kafka-connect:7.7.1
-    hostname: kafka-connect
+  connect:
+    image: confluentinc/cp-kafka-connect:${CONFLUENT_VERSION:-7.8.0}
+    hostname: connect
     container_name: kafkamart-connect
+    restart: unless-stopped
+    networks: [kafkamart-net]
     depends_on:
       kafka-1:
         condition: service_healthy
+      kafka-2:
+        condition: service_healthy
+      kafka-3:
+        condition: service_healthy
       schema-registry:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      elasticsearch:
         condition: service_healthy
     ports:
       - "${CONNECT_PORT:-8083}:8083"
     environment:
       CONNECT_BOOTSTRAP_SERVERS: kafka-1:19092,kafka-2:19092,kafka-3:19092
-      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
+      CONNECT_REST_ADVERTISED_HOST_NAME: connect
       CONNECT_REST_PORT: 8083
       CONNECT_GROUP_ID: kafkamart-connect
       CONNECT_CONFIG_STORAGE_TOPIC: _connect-configs
@@ -144,18 +155,37 @@ services:
       CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 3
       CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 3
       CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 3
-      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
-      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
-      CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8181
+      CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components,/usr/share/kafkamart-plugins
     volumes:
-      - ./infra/connectors:/etc/kafkamart/connectors:ro
+      - ./infra/connect-plugins:/usr/share/kafkamart-plugins
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8083/ >/dev/null"]
+      interval: 15s
+      timeout: 10s
+      retries: 24
+      start_period: 60s
 
   kafka-ui:
-    image: provectuslabs/kafka-ui:v0.7.2
+    image: ${KAFKA_UI_IMAGE:-provectuslabs/kafka-ui:latest}
     container_name: kafkamart-kafka-ui
+    restart: unless-stopped
+    networks: [kafkamart-net]
     depends_on:
       kafka-1:
+        condition: service_healthy
+      kafka-2:
+        condition: service_healthy
+      kafka-3:
+        condition: service_healthy
+      kafka-init:
+        condition: service_healthy
+      schema-registry:
+        condition: service_healthy
+      connect:
         condition: service_healthy
     ports:
       - "${KAFKA_UI_PORT:-9000}:8080"
@@ -163,13 +193,25 @@ services:
       KAFKA_CLUSTERS_0_NAME: kafkamart
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka-1:19092,kafka-2:19092,kafka-3:19092
       KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8181
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: connect
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://connect:8083
+      KAFKA_CLUSTERS_0_READONLY: "false"
       DYNAMIC_CONFIG_ENABLED: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/actuator/health >/dev/null || wget -qO- http://localhost:8080 >/dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:${POSTGRES_VERSION:-16}
     container_name: kafkamart-postgres
+    restart: unless-stopped
+    networks: [kafkamart-net]
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
+    command: ["postgres", "-c", "wal_level=logical", "-c", "max_wal_senders=8", "-c", "max_replication_slots=8"]
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-kafkamart}
       POSTGRES_USER: ${POSTGRES_USER:-kafkamart}
@@ -179,35 +221,62 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+      start_period: 10s
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTICSEARCH_VERSION:-8.15.3}
     container_name: kafkamart-elasticsearch
+    restart: unless-stopped
+    networks: [kafkamart-net]
     ports:
       - "${ELASTICSEARCH_PORT:-9200}:9200"
     environment:
       discovery.type: single-node
       xpack.security.enabled: "false"
+      xpack.security.http.ssl.enabled: "false"
+      xpack.security.transport.ssl.enabled: "false"
+      cluster.name: kafkamart
       ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9200 || exit 1"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200 >/dev/null"]
       interval: 10s
       timeout: 5s
-      retries: 12
+      retries: 18
+      start_period: 40s
 
   prometheus:
-    image: prom/prometheus:v2.54.1
+    image: prom/prometheus:${PROMETHEUS_VERSION:-v2.54.1}
     container_name: kafkamart-prometheus
+    restart: unless-stopped
+    networks: [kafkamart-net]
     ports:
       - "${PROMETHEUS_PORT:-9090}:9090"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9090/-/healthy >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   grafana:
-    image: grafana/grafana:11.2.0
+    image: grafana/grafana:${GRAFANA_VERSION:-11.2.0}
     container_name: kafkamart-grafana
+    restart: unless-stopped
+    networks: [kafkamart-net]
+    depends_on:
+      prometheus:
+        condition: service_healthy
     ports:
       - "${GRAFANA_PORT:-3000}:3000"
     environment:
@@ -216,12 +285,22 @@ services:
     volumes:
       - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./infra/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
 
+  # Quarkus apps — `docker compose --profile apps up -d` after each service prompt.
   order-api:
+    profiles: ["apps"]
     build:
       context: .
       dockerfile: services/order-api-service/src/main/docker/Dockerfile.jvm
     container_name: kafkamart-order-api
+    restart: unless-stopped
+    networks: [kafkamart-net]
     ports:
       - "8080:8080"
     environment:
@@ -230,114 +309,219 @@ services:
     depends_on:
       kafka-1:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/q/health/ready >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
 
   inventory:
+    profiles: ["apps"]
     build:
       context: .
       dockerfile: services/inventory-service/src/main/docker/Dockerfile.jvm
     container_name: kafkamart-inventory
+    restart: unless-stopped
+    networks: [kafkamart-net]
     ports:
       - "8081:8081"
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka-1:19092,kafka-2:19092,kafka-3:19092
       QUARKUS_HTTP_PORT: 8081
+      POSTGRES_JDBC_URL: jdbc:postgresql://postgres:5432/kafkamart
+      POSTGRES_USER: kafkamart
+      POSTGRES_PASSWORD: kafkamart
     depends_on:
       kafka-1:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8081/q/health/ready >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
 
   payment:
+    profiles: ["apps"]
     build:
       context: .
       dockerfile: services/payment-service/src/main/docker/Dockerfile.jvm
     container_name: kafkamart-payment
+    restart: unless-stopped
+    networks: [kafkamart-net]
     ports:
       - "8082:8082"
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka-1:19092,kafka-2:19092,kafka-3:19092
       QUARKUS_HTTP_PORT: 8082
+      INSTANCE_ID: payment-1
+      KAFKA_TOPIC_ORDERS: orders
+      KAFKA_TOPIC_PAYMENTS: payments
     depends_on:
       kafka-1:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8082/q/health/ready >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
 
   notification:
+    profiles: ["apps"]
     build:
       context: .
       dockerfile: services/notification-service/src/main/docker/Dockerfile.jvm
     container_name: kafkamart-notification
+    restart: unless-stopped
+    networks: [kafkamart-net]
     ports:
       - "8084:8084"
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka-1:19092,kafka-2:19092,kafka-3:19092
       QUARKUS_HTTP_PORT: 8084
+      KAFKA_TOPIC_PAYMENTS: payments
+      KAFKA_TOPIC_SHIPMENTS: shipments
     depends_on:
       kafka-1:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8084/q/health/ready >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
 
   user-profile:
+    profiles: ["apps"]
     build:
       context: .
       dockerfile: services/user-profile-service/src/main/docker/Dockerfile.jvm
     container_name: kafkamart-user-profile
+    restart: unless-stopped
+    networks: [kafkamart-net]
     ports:
       - "8085:8085"
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka-1:19092,kafka-2:19092,kafka-3:19092
       SCHEMA_REGISTRY_URL: http://schema-registry:8181
       QUARKUS_HTTP_PORT: 8085
+      KAFKA_TOPIC_USERS: users
     depends_on:
       kafka-1:
         condition: service_healthy
       schema-registry:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8085/q/health/ready >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
 
   fraud:
+    profiles: ["apps"]
     build:
       context: .
       dockerfile: services/fraud-detection-service/src/main/docker/Dockerfile.jvm
     container_name: kafkamart-fraud
+    restart: unless-stopped
+    networks: [kafkamart-net]
     ports:
       - "8086:8086"
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka-1:19092,kafka-2:19092,kafka-3:19092
+      FRAUD_STATE_DIR: /tmp/fraud-state
+      KAFKA_TOPIC_ORDERS: orders
+      KAFKA_TOPIC_FRAUD_ALERTS: fraud-alerts
       QUARKUS_HTTP_PORT: 8086
     depends_on:
       kafka-1:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8086/q/health/ready >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
 
   enrichment:
+    profiles: ["apps"]
     build:
       context: .
       dockerfile: services/order-enrichment-service/src/main/docker/Dockerfile.jvm
     container_name: kafkamart-enrichment
+    restart: unless-stopped
+    networks: [kafkamart-net]
     ports:
       - "8087:8087"
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka-1:19092,kafka-2:19092,kafka-3:19092
       SCHEMA_REGISTRY_URL: http://schema-registry:8181
+      ENRICHMENT_APPLICATION_SERVER: 0.0.0.0:8087
+      ENRICHMENT_STATE_DIR: /tmp/enrichment-state
+      KAFKA_TOPIC_ORDERS: orders
+      KAFKA_TOPIC_USERS: users
+      KAFKA_TOPIC_ORDERS_ENRICHED: orders-enriched
       QUARKUS_HTTP_PORT: 8087
     depends_on:
       kafka-1:
         condition: service_healthy
+      schema-registry:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8087/q/health/ready >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
 
   analytics:
+    profiles: ["apps"]
     build:
       context: .
       dockerfile: services/analytics-service/src/main/docker/Dockerfile.jvm
     container_name: kafkamart-analytics
+    restart: unless-stopped
+    networks: [kafkamart-net]
     ports:
       - "8088:8088"
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka-1:19092,kafka-2:19092,kafka-3:19092
+      CONNECT_URL: http://connect:8083
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      POSTGRES_JDBC_URL: jdbc:postgresql://postgres:5432/kafkamart
+      POSTGRES_USER: kafkamart
+      POSTGRES_PASSWORD: kafkamart
+      KAFKAMART_CONNECTORS_DIR: /work/connectors
       QUARKUS_HTTP_PORT: 8088
     depends_on:
       kafka-1:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
+      connect:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8088/q/health/ready >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
 
   audit-dlq:
+    profiles: ["apps"]
     build:
       context: .
       dockerfile: services/audit-dlq-service/src/main/docker/Dockerfile.jvm
     container_name: kafkamart-audit-dlq
+    restart: unless-stopped
+    networks: [kafkamart-net]
     ports:
       - "8089:8089"
     environment:
@@ -346,12 +530,21 @@ services:
     depends_on:
       kafka-1:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8089/q/health/ready >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
 
   ops-monitor:
+    profiles: ["apps"]
     build:
       context: .
       dockerfile: services/ops-monitor-service/src/main/docker/Dockerfile.jvm
     container_name: kafkamart-ops-monitor
+    restart: unless-stopped
+    networks: [kafkamart-net]
     ports:
       - "8090:8090"
     environment:
@@ -360,12 +553,21 @@ services:
     depends_on:
       kafka-1:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8090/q/health/ready >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
 
   shipping:
+    profiles: ["apps"]
     build:
       context: .
       dockerfile: services/shipping-service/src/main/docker/Dockerfile.jvm
     container_name: kafkamart-shipping
+    restart: unless-stopped
+    networks: [kafkamart-net]
     ports:
       - "8091:8091"
     environment:
@@ -374,3 +576,14 @@ services:
     depends_on:
       kafka-1:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8091/q/health/ready >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+networks:
+  kafkamart-net:
+    name: kafkamart-net
+    driver: bridge

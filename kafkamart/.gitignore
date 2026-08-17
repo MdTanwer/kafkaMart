@@ -10,4 +10,7 @@ target/
 __pycache__/
 *.pyc
 .env.local
+infra/connect-plugins/**
+!infra/connect-plugins/.gitkeep
+infra/connect-transforms/target/
 .mvn/wrapper/maven-wrapper.jar

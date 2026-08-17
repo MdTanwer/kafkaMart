@@ -1,0 +1,29 @@
+{
+  "name": "debezium-postgres-users",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "tasks.max": "1",
+    "database.hostname": "postgres",
+    "database.port": "5432",
+    "database.user": "kafkamart",
+    "database.password": "kafkamart",
+    "database.dbname": "kafkamart",
+    "topic.prefix": "kafkamart",
+    "plugin.name": "pgoutput",
+    "slot.name": "kafkamart_users",
+    "publication.name": "kafkamart_users_pub",
+    "publication.autocreate.mode": "filtered",
+    "table.include.list": "public.users",
+    "tombstones.on.delete": "true",
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable": "false",
+    "value.converter.schemas.enable": "false",
+    "transforms": "unwrap,reroute",
+    "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+    "transforms.unwrap.drop.tombstones": "false",
+    "transforms.reroute.type": "org.apache.kafka.connect.transforms.RegexRouter",
+    "transforms.reroute.regex": ".*",
+    "transforms.reroute.replacement": "users-cdc"
+  }
+}

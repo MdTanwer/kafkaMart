@@ -11,7 +11,9 @@ COPY --from=build --chown=kafkamart:kafkamart /workspace/services/analytics-serv
 COPY --from=build --chown=kafkamart:kafkamart /workspace/services/analytics-service/target/quarkus-app/*.jar /work/
 COPY --from=build --chown=kafkamart:kafkamart /workspace/services/analytics-service/target/quarkus-app/app/ /work/app/
 COPY --from=build --chown=kafkamart:kafkamart /workspace/services/analytics-service/target/quarkus-app/quarkus/ /work/quarkus/
+COPY --from=build --chown=kafkamart:kafkamart /workspace/infra/connectors /work/connectors
 EXPOSE 8088
 USER kafkamart
 ENV JAVA_OPTS_APPEND="-Dquarkus.http.host=0.0.0.0"
+ENV KAFKAMART_CONNECTORS_DIR=/work/connectors
 ENTRYPOINT ["java","-jar","/work/quarkus-run.jar"]

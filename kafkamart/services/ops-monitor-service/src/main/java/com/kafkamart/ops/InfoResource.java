@@ -4,7 +4,6 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-
 import java.util.Map;
 
 @Path("/info")
@@ -14,7 +13,6 @@ public class InfoResource {
     public Map<String, String> info() {
         return Map.of(
                 "service", "ops-monitor-service",
-                "prompt", "S10"
-        );
+                "prompt", "S10");
     }
 }

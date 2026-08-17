@@ -1,0 +1,24 @@
+{
+  "name": "elasticsearch-sink-orders-enriched",
+  "config": {
+    "connector.class": "io.confluent.connect.elasticsearch.ElasticsearchSinkConnector",
+    "tasks.max": "1",
+    "topics": "orders-enriched",
+    "connection.url": "http://elasticsearch:9200",
+    "type.name": "_doc",
+    "key.ignore": "false",
+    "schema.ignore": "true",
+    "behavior.on.null.values": "delete",
+    "behavior.on.malformed.documents": "warn",
+    "write.method": "upsert",
+    "drop.invalid.message": "true",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false",
+    "transforms": "insertTs",
+    "transforms.insertTs.type": "org.apache.kafka.connect.transforms.InsertField$Value",
+    "transforms.insertTs.timestamp.field": "ingested_at",
+    "errors.tolerance": "all",
+    "errors.log.enable": "true"
+  }
+}

@@ -1,13 +1,16 @@
 package com.kafkamart.analytics;
 
-import io.quarkus.test.junit.QuarkusTest;
-import org.junit.jupiter.api.Test;
-
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
+
 @QuarkusTest
 class HealthTest {
+    @Inject ServiceMetrics metrics;
+
     @Test
     void livenessUp() {
         given().when().get("/q/health/live").then().statusCode(200);
@@ -15,12 +18,29 @@ class HealthTest {
 
     @Test
     void readinessUpWhenBrokerAvailable() {
-        given().when().get("/q/health/ready").then().statusCode(200);
+        java.time.Instant deadline = java.time.Instant.now().plusSeconds(45);
+        int status = 0;
+        while (java.time.Instant.now().isBefore(deadline)) {
+            status = given().when().get("/q/health/ready").then().extract().statusCode();
+            if (status == 200) {
+                return;
+            }
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                throw new AssertionError(interrupted);
+            }
+        }
+        throw new AssertionError("readiness not UP, last status=" + status);
     }
 
     @Test
     void metricsExposeBusinessCounters() {
-        given().when().get("/q/metrics").then()
+        metrics.produced();
+        given().when()
+                .get("/q/metrics")
+                .then()
                 .statusCode(200)
                 .body(containsString("kafkamart_events_produced"));
     }

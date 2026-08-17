@@ -14,4 +14,6 @@ COPY --from=build --chown=kafkamart:kafkamart /workspace/services/order-enrichme
 EXPOSE 8087
 USER kafkamart
 ENV JAVA_OPTS_APPEND="-Dquarkus.http.host=0.0.0.0"
+ENV ENRICHMENT_STATE_DIR=/tmp/enrichment-state
+ENV ENRICHMENT_APPLICATION_SERVER=0.0.0.0:8087
 ENTRYPOINT ["java","-jar","/work/quarkus-run.jar"]

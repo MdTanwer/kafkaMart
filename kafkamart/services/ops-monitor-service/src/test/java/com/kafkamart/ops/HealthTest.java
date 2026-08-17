@@ -1,13 +1,16 @@
 package com.kafkamart.ops;
 
-import io.quarkus.test.junit.QuarkusTest;
-import org.junit.jupiter.api.Test;
-
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
+
 @QuarkusTest
 class HealthTest {
+    @Inject ServiceMetrics metrics;
+
     @Test
     void livenessUp() {
         given().when().get("/q/health/live").then().statusCode(200);
@@ -20,7 +23,10 @@ class HealthTest {
 
     @Test
     void metricsExposeBusinessCounters() {
-        given().when().get("/q/metrics").then()
+        metrics.produced();
+        given().when()
+                .get("/q/metrics")
+                .then()
                 .statusCode(200)
                 .body(containsString("kafkamart_events_produced"));
     }

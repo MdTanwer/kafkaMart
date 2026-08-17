@@ -14,4 +14,5 @@ COPY --from=build --chown=kafkamart:kafkamart /workspace/services/fraud-detectio
 EXPOSE 8086
 USER kafkamart
 ENV JAVA_OPTS_APPEND="-Dquarkus.http.host=0.0.0.0"
+ENV FRAUD_STATE_DIR=/tmp/fraud-state
 ENTRYPOINT ["java","-jar","/work/quarkus-run.jar"]
