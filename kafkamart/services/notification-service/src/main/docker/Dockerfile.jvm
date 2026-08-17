@@ -1,0 +1,17 @@
+# Multi-stage JVM image for notification-service
+FROM eclipse-temurin:21-jdk-jammy AS build
+WORKDIR /workspace
+COPY . .
+RUN chmod +x mvnw && ./mvnw -pl services/notification-service -am -DskipTests package
+
+FROM eclipse-temurin:21-jre-jammy
+WORKDIR /work
+RUN groupadd --system kafkamart && useradd --system --gid kafkamart kafkamart
+COPY --from=build --chown=kafkamart:kafkamart /workspace/services/notification-service/target/quarkus-app/lib/ /work/lib/
+COPY --from=build --chown=kafkamart:kafkamart /workspace/services/notification-service/target/quarkus-app/*.jar /work/
+COPY --from=build --chown=kafkamart:kafkamart /workspace/services/notification-service/target/quarkus-app/app/ /work/app/
+COPY --from=build --chown=kafkamart:kafkamart /workspace/services/notification-service/target/quarkus-app/quarkus/ /work/quarkus/
+EXPOSE 8084
+USER kafkamart
+ENV JAVA_OPTS_APPEND="-Dquarkus.http.host=0.0.0.0"
+ENTRYPOINT ["java","-jar","/work/quarkus-run.jar"]

@@ -1,13 +1,47 @@
-# KafkaMart — Agent Constitution (PROMPT 0)
+# KAFKAMART — AGENT CONSTITUTION (NON-NEGOTIABLE)
 
-This file is mandatory. Read it before every implementation prompt. Later prompts refine behavior; they never override this constitution unless the user explicitly says so.
+Read this file before every implementation prompt. Later prompts refine behavior; they never override this constitution unless the user explicitly says so. Implement **only** the numbered prompt the user pastes next.
 
-## Mission
+## Stack
+- Java 21, Maven, latest Quarkus 3.x LTS, JVM mode (native = optional stretch)
+- Kafka: SmallRye Reactive Messaging (quarkus-smallrye-reactive-messaging-kafka)
+- Streams: quarkus-kafka-streams | Avro: quarkus-confluent-registry-avro
+- DB: quarkus-hibernate-orm-panache + quarkus-jdbc-postgresql
+- Tests: JUnit5, @QuarkusTest, Dev Services (Kafka), Testcontainers for e2e
 
-KafkaMart is a multi-module Spring Boot + Apache Kafka ecommerce demo. Implement **only** the numbered prompt the user pastes next (S1–S11, infra, scripts). Do not invent topics, events, APIs, or services that the current prompt does not specify.
+## EVERY service MUST have (Definition of Done):
+1. Health: /q/health/live + /q/health/ready (Kafka readiness MUST fail if broker down)
+2. Metrics: quarkus-micrometer-registry-prometheus at /q/metrics + custom business counters
+3. OpenAPI: quarkus-smallrye-openapi (/q/openapi)
+4. JSON console logs in %prod profile (quarkus-log-json), pretty in %dev
+5. ALL infra config from env vars with localhost defaults:
+   kafka.bootstrap.servers=${KAFKA_BOOTSTRAP_SERVERS:localhost:9092,localhost:9094,localhost:9096}
+   Never hardcode brokers, topics, credentials.
+6. Bean Validation (quarkus-hibernate-validator) on every REST input
+7. Graceful shutdown: quarkus.shutdown.timeout=30S. Never System.exit().
+8. Dockerfile.jvm (multi-stage) in src/main/docker + docker-compose service entry
+9. README.md: run commands + WHICH Kafka concept this service teaches + how to demo it
+10. Tests green: ./mvnw verify. No TODO/FIXME left. Idempotent consumers ALWAYS.
+
+## Conventions
+- Group: com.kafkamart | Package: com.kafkamart.<servicename>
+- DTOs are Java records in kafkamart-common (JSON via Jackson, except UserProfile = Avro)
+- Every event carries: eventId (UUID), occurredAt (Instant), traceId (MDC-propagated)
+- Producers: acks=all + enable.idempotence=true UNLESS the exercise says otherwise
+- Topics are created ONLY via scripts/create-topics.sh (auto.create.topics.enable=false)
+
+## Ports
+order-api 8080 | inventory 8081 | payment 8082 | notification 8084 | user-profile 8085
+fraud 8086 | enrichment 8087 | analytics 8088 | audit-dlq 8089 | ops-monitor 8090 | shipping 8091
+Kafka host ports 9092/9094/9096 (internal 19092) | Schema Registry 8181 | Kafka-UI 9000
+Connect 8083 | Postgres 5432 | Elasticsearch 9200 | Prometheus 9090 | Grafana 3000
+
+## When stuck
+- SmallRye Kafka connector config reference: smallrye.io/smallrye-reactive-messaging (Kafka connector attributes)
+- Quarkus guides: quarkus.io/guides/kafka, /kafka-streams, /confluent-registry-avro, /kafka-dev-services
+- Unknown mp.messaging channel attributes PASS THROUGH to the Kafka client — use this for any producer/consumer tuning.
 
 ## Prompt cadence
-
 1. Wait for the next prompt. Implement that prompt fully, then stop.
 2. Do not skip ahead to later services.
 3. If a prompt conflicts with this file, ask before changing the constitution.
@@ -17,7 +51,7 @@ KafkaMart is a multi-module Spring Boot + Apache Kafka ecommerce demo. Implement
 
 | Path | Role |
 |------|------|
-| `kafkamart-common/` | Shared DTOs, topic constants, Kafka helpers, test utils |
+| `kafkamart-common/` | Shared records, topic constants, test utils |
 | `services/order-api-service/` | S1 — HTTP order intake (8080) |
 | `services/inventory-service/` | S2 — stock reservation (8081) |
 | `services/payment-service/` | S3 — payment capture (8082) |
@@ -33,53 +67,3 @@ KafkaMart is a multi-module Spring Boot + Apache Kafka ecommerce demo. Implement
 | `infra/schemas/` | Avro `.avsc` v1/v2 (S5) |
 | `infra/prometheus/`, `infra/grafana/` | Metrics dashboards |
 | `scripts/` | `create-topics.sh`, `chaos/`, `load/` |
-
-Port **8083** is reserved for Schema Registry. Do not bind an app there.
-
-## Stack (do not change unless a prompt says so)
-
-- Java 17, Maven multi-module, Spring Boot 3.3
-- `spring-kafka`; Kafka Streams only where the service POM already includes it
-- JSON for domain events unless the prompt requires Avro (S5 / enrichment)
-- Confluent Schema Registry + Avro for user-profile contracts
-- Docker Compose: Kafka (KRaft), Schema Registry, Kafka Connect, Prometheus, Grafana
-- Actuator: `health`, `info`, `prometheus`, `metrics`
-
-## Kafka contracts
-
-Until a later prompt names topics, use constants in `kafkamart-common` — do not hard-code topic strings in services.
-
-Producer defaults (already in each `application.yml`):
-
-- `acks=all`
-- `enable.idempotence=true`
-- JSON type headers on
-- `isolation.level=read_committed` on consumers
-- listener `ack-mode: record`
-- Streams `processing.guarantee=exactly_once_v2` where Streams is used
-
-Every published record should carry identity headers (service id, event type, event id, correlation / causation). Implement this in `EventPublisher` when that prompt arrives; services must not copy-paste producer header logic.
-
-Consumer failures go to a DLQ via the shared `KafkaErrorHandlerConfig`. Do not swallow exceptions in listeners.
-
-Schema evolution (S5): **BACKWARD** compatibility only. Add optional fields with defaults. Never rename/remove fields or change types in place. Version Avro under `infra/schemas/<name>/v1` and `v2`.
-
-## Code style
-
-- Match existing packages: `com.kafkamart.<service>`
-- Plain Java (getters/setters). No Lombok unless a prompt requires it.
-- Business logic in services; DTOs/events in `kafkamart-common`
-- New endpoints: validation + actuator health; no extra frameworks
-- Tests live under each module’s `src/test/java` when the prompt asks for them
-- Do not commit secrets. Keep credentials in `.env` only.
-
-## Infra / scripts
-
-- Topics are created by `scripts/create-topics.sh`, not by apps at runtime.
-- Connect configs are JSON files in `infra/connectors/` (posted to Connect, not compiled into apps).
-- Chaos and load scripts stay under `scripts/chaos/` and `scripts/load/`.
-- Compose service names and env vars must stay aligned with `.env`.
-
-## Done when
-
-The current prompt’s files compile against the parent POM, follow this constitution, and do not implement the next prompt.
