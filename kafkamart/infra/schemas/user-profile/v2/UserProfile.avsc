@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "UserProfile",
+  "namespace": "com.kafkamart.avro",
+  "doc": "User profile v2 — BACKWARD compatible with v1 (optional fields + defaults only)",
+  "fields": [
+    {"name": "userId", "type": "string"},
+    {"name": "email", "type": "string"},
+    {"name": "fullName", "type": "string"},
+    {"name": "updatedAt", "type": {"type": "long", "logicalType": "timestamp-millis"}},
+    {"name": "loyaltyTier", "type": ["null", "string"], "default": null},
+    {"name": "country", "type": ["null", "string"], "default": null},
+    {"name": "marketingOptIn", "type": "boolean", "default": false}
+  ]
+}

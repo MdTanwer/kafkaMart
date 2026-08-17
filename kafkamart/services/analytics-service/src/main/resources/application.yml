@@ -1,0 +1,47 @@
+server:
+  port: 8088
+spring:
+  application:
+    name: analytics-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9094}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        spring.json.add.type.headers: true
+        schema.registry.url: ${SCHEMA_REGISTRY_URL:http://localhost:8083}
+        auto.register.schemas: true
+    consumer:
+      group-id: analytics-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        isolation.level: read_committed
+        schema.registry.url: ${SCHEMA_REGISTRY_URL:http://localhost:8083}
+        specific.avro.reader: true
+    listener:
+      ack-mode: record
+    streams:
+      application-id: analytics-service
+      properties:
+        processing.guarantee: exactly_once_v2
+        commit.interval.ms: 1000
+        schema.registry.url: ${SCHEMA_REGISTRY_URL:http://localhost:8083}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: analytics-service
+kafkamart:
+  service-id: analytics-service
